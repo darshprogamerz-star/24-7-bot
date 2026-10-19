@@ -83,5 +83,12 @@
   },
   "chat": {
     "respond": true
+  },
+  "welcome": {
+    "enabled": true,
+    "message": "welcome to TAKENMC",
+    "delay": 1500,
+    "cooldown": 60000,
+    "grace-period": 5000
   }
 }

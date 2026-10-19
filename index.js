@@ -1626,6 +1626,12 @@ function initializeModules(bot, mcData, defaultMove) {
     chatModule(bot);
   }
 
+  // ---------- WELCOME MESSAGE ON PLAYER JOIN ----------
+  // Enabled by default; set welcome.enabled = false in settings.json to turn off
+  if (!config.welcome || config.welcome.enabled !== false) {
+    welcomeModule(bot);
+  }
+
   addLog("[Modules] All modules initialized!");
 }
 
@@ -1848,6 +1854,106 @@ function bedModule(bot, mcData) {
       addLog("[Bed] Error:", e.message);
     }
   }, 10000);
+}
+
+// ============================================================
+// WELCOME MODULE
+// Whenever a player joins the server, the bot sends the welcome
+// message in chat (default: "welcome to TAKENMC").
+//
+// How it works:
+//  - Listens to "playerJoined", which is fired from the tab list
+//    (player_info packet), so it fires no matter how far the
+//    joining player is from the bot.
+//  - "playerJoined" also fires for everyone who is ALREADY online
+//    when the bot spawns, so a short grace period is used to skip
+//    those players (otherwise the bot would spam welcomes on every
+//    reconnect).
+//  - A cooldown prevents double-welcoming the same player if they
+//    rejoin quickly.
+//  - {player} / %player% in the message is replaced by the name.
+// ============================================================
+function welcomeModule(bot) {
+  const cfg = config.welcome || {};
+  const template = cfg.message || "welcome to TAKENMC";
+  const delayMs = Number.isFinite(cfg.delay) ? cfg.delay : 1500;
+  const cooldownMs = Number.isFinite(cfg.cooldown) ? cfg.cooldown : 60000;
+  const graceMs = Number.isFinite(cfg["grace-period"])
+    ? cfg["grace-period"]
+    : 5000;
+
+  const botRef = bot;
+  const known = new Set(Object.keys(bot.players || {}));
+  const lastGreeted = new Map();
+  const pending = new Set();
+  let armed = false;
+  let graceTimer = null;
+
+  graceTimer = setTimeout(() => {
+    graceTimer = null;
+    if (botRef !== bot) return;
+    armed = true;
+    addLog(`[Welcome] Ready - greeting new joins with: "${template}"`);
+  }, graceMs);
+
+  function stop() {
+    armed = false;
+    if (graceTimer) {
+      clearTimeout(graceTimer);
+      graceTimer = null;
+    }
+    pending.forEach((t) => clearTimeout(t));
+    pending.clear();
+  }
+
+  bot.on("playerJoined", (player) => {
+    const name = player && player.username;
+    if (!name) return;
+
+    // Never greet ourselves
+    if (name === bot.username) return;
+
+    // Still in the grace window -> player was already online
+    if (!armed) {
+      known.add(name);
+      return;
+    }
+
+    // Tab list was re-sent / duplicate event for a known player
+    if (known.has(name)) return;
+    known.add(name);
+
+    // Don't welcome the same player again if they rejoin quickly
+    const now = Date.now();
+    if (now - (lastGreeted.get(name) || 0) < cooldownMs) return;
+    lastGreeted.set(name, now);
+
+    const message = template
+      .replace(/\{player\}/gi, name)
+      .replace(/%player%/gi, name);
+
+    const timer = setTimeout(() => {
+      pending.delete(timer);
+      if (botRef !== bot || !bot || !botState.connected) return;
+      try {
+        bot.chat(message);
+        botState.lastActivity = Date.now();
+        addLog(`[Welcome] ${name} joined -> sent: ${message}`);
+      } catch (e) {
+        addLog("[Welcome] Error:", e.message);
+      }
+    }, delayMs);
+    pending.add(timer);
+  });
+
+  // Allow a re-welcome when the player leaves and joins again later
+  bot.on("playerLeft", (player) => {
+    if (player && player.username) known.delete(player.username);
+  });
+
+  bot.once("end", stop);
+  bot.once("kicked", stop);
+  bot.once("error", stop);
 }
 
 // Chat module
