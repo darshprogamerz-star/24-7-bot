@@ -6,7 +6,7 @@
     "type": "offline"
   },
   "server": {
-    "ip": "taken.play.hosting",
+    "ip": "takenmc.play.hosting",
     "port": 25735,
     "version": "1.20.1",
     "try-creative": false
