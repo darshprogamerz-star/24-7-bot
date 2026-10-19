@@ -6,8 +6,8 @@
     "type": "offline"
   },
   "server": {
-    "ip": "DG_LAND502.aternos.me",
-    "port": 62974,
+    "ip": "taken.play.hosting",
+    "port": 25735,
     "version": "1.20.1",
     "try-creative": false
   },
@@ -31,9 +31,8 @@
       "repeat": true,
       "repeat-delay": 120,
       "messages": [
-        "sab Kuch khatam karduga",
+        "Welcome to TAKENMC everyone",
         "Subscribe to DG GAMERZ502!",
-        "koi yaha se kuch mat chrana"
       ]
     },
     "chat-log": true,
