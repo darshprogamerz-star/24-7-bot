@@ -29,7 +29,7 @@
     "chat-messages": {
       "enabled": true,
       "repeat": true,
-      "repeat-delay": 1500,
+      "repeat-delay": 15000,
       "messages": [
         "Welcome to TAKENMC everyone",
         "Subscribe to DG GAMERZ502!",
