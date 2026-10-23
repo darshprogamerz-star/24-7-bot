@@ -7,7 +7,7 @@
   },
   "server": {
     "ip": "takenmc.play.hosting",
-    "port": 25565,
+    "port": 25814,
     "version": "1.20.1",
     "try-creative": false
   },
